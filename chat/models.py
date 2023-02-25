@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 
 class ThreadModel(models.Model):
-    participants = models.ForeignKey(User, on_delete=models.CASCADE)
+    participants = models.ManyToManyField(User, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

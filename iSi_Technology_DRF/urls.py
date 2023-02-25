@@ -15,7 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from chat.views import ThreadApiView, UserThread, UserMsg
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/threads/', UserThread.as_view(), name='threads'),
+    path('api/v1/threads/<int:thread_id>/', ThreadApiView.as_view(), name='thread'),
+    path('api/v1/threads/<int:thread_id>/msgs/', ThreadApiView.as_view(), name='thread_msgs'),
+    path('api/v1/msgs/', UserMsg.as_view(), name='msgs'),
 ]
