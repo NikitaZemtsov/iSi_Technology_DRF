@@ -29,7 +29,7 @@ class UserThread(APIView):
     def get(self, request):
         user_id = request.GET.get('user_id')
         user = User.objects.filter(pk=user_id).first() if user_id else self.request.user
-        thread = user.threadmodel_set.all().values()
+        thread = user.threads.all().values()
         return Response({'thread': ThreadSerializers(thread, many=True).data})
 
     def post(self, request):
@@ -37,7 +37,7 @@ class UserThread(APIView):
         serializers.is_valid(raise_exception=True)
         serializers.save()
         print(serializers.data)
-        return Response(serializers.data)
+        return Response({'thread': serializers.data})
 
 
 class UserMsg(APIView):
