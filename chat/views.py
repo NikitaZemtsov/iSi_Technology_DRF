@@ -11,17 +11,16 @@ from .serializers import ThreadSerializers, MessageSerializers
 class ThreadApiView(APIView):
 
     def get(self, request, thread_id):
-        ''' get list of message
-        :parameter
-            ?filter = new - only new message
-            ?offset=1000 - first 1000
-                    -1000 - last 1000
-            ?limit =
-        '''
-        return Response({'title':'lskjdf'})
+        thread = ThreadModel.objects.filter(pk=thread_id).first()
+        MessageSerializers(data=thread.messagemodel_set.all().order_by('-created'), many=True)
+        return Response({'message': MessageSerializers(data=thread.messagemodel_set.all(), many=True)})
 
-    def post(self, request):
-        return Response({})
+    def post(self, request, thread_id):
+        thread = ThreadModel.objects.filter(pk=thread_id).first()
+        serializers = MessageSerializers(data=request.data, many=True)
+        serializers.is_valid(raise_exception=True)
+        serializers.save()
+        return Response({'message': serializers.data})
 
 
 class UserThread(APIView):
@@ -29,14 +28,16 @@ class UserThread(APIView):
     def get(self, request):
         user_id = request.GET.get('user_id')
         user = User.objects.filter(pk=user_id).first() if user_id else self.request.user
-        thread = user.threads.all().values()
-        return Response({'thread': ThreadSerializers(thread, many=True).data})
+        threads = user.threads.all()
+        return Response({'thread': ThreadSerializers(threads, many=True).data})
 
     def post(self, request):
         serializers = ThreadSerializers(data=request.data)
         serializers.is_valid(raise_exception=True)
+        thread = serializers.check_thread_exist()
+        if thread:
+            return Response({'thread': ThreadSerializers(thread).data})
         serializers.save()
-        print(serializers.data)
         return Response({'thread': serializers.data})
 
 

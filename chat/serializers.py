@@ -4,7 +4,6 @@ from .models import ThreadModel
 
 class UserSerializer(serializers.ModelSerializer):
 
-
     class Meta:
         model = User
         fields = ['pk']
@@ -22,6 +21,7 @@ class ThreadSerializers(serializers.Serializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['pk'] = instance.pk
+        representation['message'] = instance.messagemodel_set.filter(is_read=False).order_by('-created')
         return representation
 
     def create(self, validated_data):
@@ -29,10 +29,17 @@ class ThreadSerializers(serializers.Serializer):
         thread.participants.set(validated_data.get('participants'))
         return thread
 
+    def check_thread_exist(self):
+        users = self.validated_data.get('participants')
+        thread = list(set(users[0].threads.all()) & set(users[1].threads.all()))
+        return thread[0] if len(thread) == 1 else False
+
+
 class MessageSerializers(serializers.Serializer):
     sender = serializers.IntegerField(read_only=True)
     text = serializers.CharField()
     thread = serializers.IntegerField(read_only=True)
     is_read = serializers.BooleanField(default=False)
+    created = serializers.DateTimeField(read_only=True)
 
 

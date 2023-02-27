@@ -16,6 +16,7 @@ class MessageModel(models.Model):
     text = models.TextField(blank=True)
     thread = models.ForeignKey(ThreadModel, on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'Message: {self.pk} in thread: {self.thread}'
