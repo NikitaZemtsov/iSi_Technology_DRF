@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import ThreadModel
+from .models import ThreadModel, MessageModel
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -36,10 +36,18 @@ class ThreadSerializers(serializers.Serializer):
 
 
 class MessageSerializers(serializers.Serializer):
-    sender = serializers.IntegerField(read_only=True)
+    sender = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     text = serializers.CharField()
-    thread = serializers.IntegerField(read_only=True)
+    thread = serializers.PrimaryKeyRelatedField(queryset=ThreadModel.objects.all())
     is_read = serializers.BooleanField(default=False)
     created = serializers.DateTimeField(read_only=True)
 
+    def create(self, validated_data):
+        msg = MessageModel.objects.create(**validated_data)
+        return msg
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['pk'] = instance.pk
+        representation['created'] = instance.created
+        return representation

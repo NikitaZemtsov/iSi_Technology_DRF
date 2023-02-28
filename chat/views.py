@@ -12,11 +12,14 @@ class ThreadApiView(APIView):
 
     def get(self, request, thread_id):
         thread = ThreadModel.objects.filter(pk=thread_id).first()
-        MessageSerializers(data=thread.messagemodel_set.all().order_by('-created'), many=True)
-        return Response({'message': MessageSerializers(data=thread.messagemodel_set.all(), many=True)})
+        msgs = MessageSerializers(data=thread.messagemodel_set.all().order_by('-created'), many=True)
+        msgs.is_valid()
+        return Response({'message': msgs.data})
 
     def post(self, request, thread_id):
-        thread = ThreadModel.objects.filter(pk=thread_id).first()
+        sender_data = {'sender': 2, 'thread': thread_id}# todo refactor key 'sender' when whould add JWT/
+        for msg in request.data:
+            msg.update(sender_data)
         serializers = MessageSerializers(data=request.data, many=True)
         serializers.is_valid(raise_exception=True)
         serializers.save()

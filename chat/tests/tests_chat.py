@@ -67,8 +67,47 @@ class UserThreadTestCase(APITestCase):
 class ThreadApiViewTestCase(APITestCase):
     fixtures = ['user.json']
 
-    def test_thread_api_view_post(self):
+    def test_thread_api_view_POST(self):
         response = self.client.post(reverse('threads'), {'participants': [2, 3]}, format='json')
         pk = response.json().get('thread').get('pk')
-        response = self.client.post(reverse('thread', args=[pk]), {'message': 'HELLO_WORLD'}, format='json')
-        # todo make POST TEST
+        with freeze_time(datetime(2023, 2, 18, hour=15, minute=1)):
+            response = self.client.post(reverse('thread', args=[pk]), [{'text': 'HELLO_WORLD}'}, ], format='json')
+        self.assertEqual(response.json(), {'message': [{'created': '2023-02-18T15:01:00Z',
+                                                        'is_read': False,
+                                                        'pk': 1,
+                                                        'sender': 2,
+                                                        'text': 'HELLO_WORLD}',
+                                                        'thread': 1}]})
+
+    def test_thread_api_view_GET(self):
+        texts = ['HELLO_WORLD}', 'wikki', 'JOJO']
+        response = self.client.post(reverse('threads'), {'participants': [2, 3]}, format='json')
+        pk = response.json().get('thread').get('pk')
+        minute = 1
+        for text in texts:
+            with freeze_time(datetime(2023, 2, 18, hour=15, minute=minute)):
+                self.client.post(reverse('thread', args=[pk]), [{'text': text}, ], format='json')
+            minute += 1
+        response = self.client.get(reverse('thread', args=[pk]))
+        self.assertEqual(response.json(), {'message': [{'sender': 2,
+                                                        'text': 'JOJO',
+                                                        'thread': 1,
+                                                        'is_read': False,
+                                                        'created': '2023-02-18T15:03:00Z',
+                                                        'pk': 3
+                                                        },
+                                                       {'sender': 2,
+                                                        'text': 'wikki',
+                                                        'thread': 1,
+                                                        'is_read': False,
+                                                        'created': '2023-02-18T15:02:00Z',
+                                                        'pk': 2
+                                                        },
+                                                       {'sender': 2,
+                                                        'text': 'HELLO_WORLD}',
+                                                        'thread': 1,
+                                                        'is_read': False,
+                                                        'created': '2023-02-18T15:01:00Z',
+                                                        'pk': 1
+                                                        }
+                                                       ]})
